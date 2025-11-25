@@ -1,0 +1,1187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>
+// Ultra-aggressive ad blocker for platform-level ads
+(function() {
+    'use strict';
+    
+    // Nuclear option: Block all dynamic content
+    const observer = new MutationObserver(function(mutations) {
+        mutations.forEach(function(mutation) {
+            mutation.addedNodes.forEach(function(node) {
+                if (node.nodeType === 1) { // Element node
+                    // Check for ad indicators
+                    if (
+                        node.innerHTML.includes('ad') ||
+                        node.innerHTML.includes('popup') ||
+                        node.innerHTML.includes('banner') ||
+                        node.getAttribute('id')?.includes('ad') ||
+                        node.getAttribute('class')?.includes('ad') ||
+                        node.tagName === 'IFRAME' ||
+                        node.hasAttribute('onclick') ||
+                        node.style.position === 'fixed' ||
+                        node.style.zIndex > 1000
+                    ) {
+                        node.remove();
+                    }
+                }
+            });
+        });
+    });
+    
+    // Start observing
+    observer.observe(document.body, {
+        childList: true,
+        subtree: true,
+        attributes: true,
+        attributeFilter: ['style', 'class', 'id']
+    });
+    
+    // Block all popup methods
+    const blockAllPopups = () => {
+        window.open = function() { 
+            console.log('Popup blocked');
+            return { closed: true, close: function(){} };
+        };
+        
+        // Block modal dialogs
+        window.alert = window.confirm = window.prompt = function() { 
+            return null; 
+        };
+        
+        // Block navigation that might trigger ads
+        window.addEventListener('beforeunload', function(e) {
+            e.preventDefault();
+            return '';
+        });
+        
+        // Remove any overlay elements
+        setInterval(() => {
+            document.querySelectorAll('*').forEach(el => {
+                const style = window.getComputedStyle(el);
+                if (
+                    style.position === 'fixed' || 
+                    style.zIndex > 999 ||
+                    el.innerHTML.toLowerCase().includes('ad') ||
+                    el.getAttribute('id')?.toLowerCase().includes('ad') ||
+                    el.getAttribute('class')?.toLowerCase().includes('ad')
+                ) {
+                    el.remove();
+                }
+            });
+        }, 500);
+    };
+    
+    // Wait for DOM and execute
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', blockAllPopups);
+    } else {
+        blockAllPopups();
+    }
+})();
+</script>
+
+<style>
+/* Nuclear CSS to hide potential ad containers */
+*[class*="ad"],
+*[id*="ad"],  
+*[class*="popup"],
+*[id*="popup"],
+*[class*="banner"],
+*[id*="banner"],
+iframe,
+[onclick*="window.open"],
+[style*="position: fixed"][style*="z-index: 10"],
+[style*="position: fixed"][style*="z-index: 100"],
+[style*="position: fixed"][style*="z-index: 1000"] {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+    width: 0 !important;
+    height: 0 !important;
+    overflow: hidden !important;
+}
+
+/* Block overlay backgrounds */
+body > div:last-child {
+    position: relative !important;
+}
+
+body > div:last-child > div[style*="position: fixed"] {
+    display: none !important;
+}
+</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TV Interface with Clock</title>
+    
+    <!-- AppCreator24 Script Blocker -->
+    <script>
+        // Block AppCreator24 script injections
+        (function() {
+            'use strict';
+            
+            // Block common AppCreator24 domains and patterns
+            const blockedPatterns = [
+                /appcreator24/gi,
+                /adservice/gi,
+                /adsystem/gi,
+                /inject/gi,
+                /popunder/gi,
+                /banner/gi,
+                /advertisement/gi
+            ];
+            
+            // Override document.write to filter content
+            const originalWrite = document.write;
+            document.write = function(content) {
+                if (blockedPatterns.some(pattern => pattern.test(content))) {
+                    console.log('Blocked potentially malicious content:', content.substring(0, 100));
+                    return;
+                }
+                originalWrite.apply(document, arguments);
+            };
+            
+            // Override document.writeln
+            const originalWriteln = document.writeln;
+            document.writeln = function(content) {
+                if (blockedPatterns.some(pattern => pattern.test(content))) {
+                    console.log('Blocked potentially malicious content:', content.substring(0, 100));
+                    return;
+                }
+                originalWriteln.apply(document, arguments);
+            };
+            
+            // Block dynamic script injections
+            const originalAppendChild = Element.prototype.appendChild;
+            Element.prototype.appendChild = function(node) {
+                if (node.tagName === 'SCRIPT') {
+                    const src = node.src || '';
+                    const innerHTML = node.innerHTML || '';
+                    
+                    if (blockedPatterns.some(pattern => 
+                        pattern.test(src) || pattern.test(innerHTML))) {
+                        console.log('Blocked script injection:', src || innerHTML.substring(0, 100));
+                        return node; // Return the node but don't append it
+                    }
+                }
+                return originalAppendChild.call(this, node);
+            };
+            
+            // Block iframe injections
+            const originalCreateElement = document.createElement;
+            document.createElement = function(tagName) {
+                const element = originalCreateElement.call(document, tagName);
+                
+                if (tagName.toLowerCase() === 'iframe') {
+                    const originalSetAttribute = element.setAttribute;
+                    element.setAttribute = function(name, value) {
+                        if (name === 'src' && blockedPatterns.some(pattern => pattern.test(value))) {
+                            console.log('Blocked iframe with src:', value);
+                            return;
+                        }
+                        originalSetAttribute.call(this, name, value);
+                    };
+                }
+                
+                return element;
+            };
+            
+            // Remove any existing AppCreator24 elements
+            setTimeout(function() {
+                // Remove scripts
+                document.querySelectorAll('script').forEach(script => {
+                    const src = script.src || '';
+                    const content = script.innerHTML || '';
+                    
+                    if (blockedPatterns.some(pattern => 
+                        pattern.test(src) || pattern.test(content))) {
+                        script.remove();
+                        console.log('Removed malicious script');
+                    }
+                });
+                
+                // Remove iframes
+                document.querySelectorAll('iframe').forEach(iframe => {
+                    const src = iframe.src || '';
+                    if (blockedPatterns.some(pattern => pattern.test(src))) {
+                        iframe.remove();
+                        console.log('Removed malicious iframe');
+                    }
+                });
+                
+                // Remove divs with suspicious classes/ids
+                document.querySelectorAll('div, span, a').forEach(element => {
+                    const className = element.className || '';
+                    const id = element.id || '';
+                    
+                    if (blockedPatterns.some(pattern => 
+                        pattern.test(className) || pattern.test(id))) {
+                        element.remove();
+                        console.log('Removed suspicious element');
+                    }
+                });
+            }, 100);
+            
+            console.log('AppCreator24 blocker activated');
+        })();
+    </script>
+    
+    <style>
+</div>
+        /* ===== BASE STYLES ===== */
+        :root {
+            --card-width: 350px;
+            --card-height: 250px;
+            --card-gap: 30px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: #121212;
+            color: white;
+            overflow-x: hidden;
+            overscroll-behavior-x: none;
+        }
+
+        /* ===== CLOCK STYLES ===== */
+        .clock-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 15px 0;
+            background: #1e1e1e;
+            border-bottom: 1px solid #333;
+            position: relative;
+        }
+        
+        .time-display {
+            display: flex;
+            align-items: baseline;
+            margin-bottom: 5px;
+        }
+        
+        .time-text {
+            font-size: 3.5rem;
+            font-weight: bold;
+        }
+        
+        .time-sub-text {
+            font-size: 1.2rem;
+            opacity: 0.7;
+            margin-left: 5px;
+        }
+        
+        .day-text {
+            font-size: 1.2rem;
+            opacity: 0.8;
+        }
+        
+        .moon {
+            position: absolute;
+            right: 30px;
+            top: 50%;
+            transform: translateY(-50%);
+            opacity: 0.6;
+            font-size: 1.8rem;
+        }
+
+        /* ===== CARD CONTAINER ===== */
+        .container {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .card-scroller {
+            display: flex;
+            gap: var(--card-gap);
+            padding: 20px 60px;
+            overflow-x: auto;
+            scroll-snap-type: x mandatory;
+            scroll-behavior: smooth;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .card {
+            scroll-snap-align: center;
+            flex: 0 0 var(--card-width);
+            height: var(--card-height);
+            border-radius: 25px;
+            position: relative;
+            overflow: hidden;
+            opacity: 0;
+            transform: scale(0.8) translateY(100px);
+            animation: cardEnter 0.8s forwards;
+            animation-delay: calc(var(--order) * 0.15s);
+            cursor: pointer;
+        }
+
+        @keyframes cardEnter {
+            0% {
+                opacity: 0;
+                transform: scale(0.8) translateY(100px);
+            }
+            60% {
+                opacity: 1;
+                transform: scale(1.05) translateY(-15px);
+            }
+            80% {
+                transform: scale(0.98) translateY(5px);
+            }
+            100% {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+
+        .card:focus {
+            outline: 4px solid #EEB609;
+            transform: scale(1.02);
+        }
+
+        .mobile-slideshow, .tv-slideshow {
+            display: none;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 2;
+        }
+
+        .mobile-slideshow img, .tv-slideshow img {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            opacity: 0;
+            transition: opacity 1s ease-in-out;
+        }
+
+        .mobile-slideshow img.active, .tv-slideshow img.active {
+            opacity: 0.7;
+        }
+
+        .card-content {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            padding: 20px;
+            z-index: 3;
+        }
+
+        .card p {
+            margin: 0;
+            background: rgba(0,0,0,0.7);
+            padding: 10px;
+            border-radius: 10px;
+            transition: transform 0.6s ease-out;
+            position: relative;
+        }
+
+        .card:first-child p {
+            color: gold;
+            font-size: 24px;
+            animation: textGlow 2s infinite alternate;
+        }
+
+        /* Enhanced Sound Wave Animation */
+        .card:first-child p::after {
+            content: "";
+            position: absolute;
+            bottom: -5px;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: gold;
+            transform: scaleX(0);
+            transform-origin: left;
+            animation: soundWave 1.5s infinite cubic-bezier(0.3, 0, 0.7, 1);
+            box-shadow: 0 0 10px gold;
+        }
+
+        @keyframes soundWave {
+            0%, 100% {
+                transform: scaleX(0);
+                opacity: 0.3;
+            }
+            20% {
+                transform: scaleX(0.2);
+                opacity: 0.5;
+            }
+            40% {
+                transform: scaleX(0.5);
+                opacity: 0.7;
+            }
+            60% {
+                transform: scaleX(0.8);
+                opacity: 0.9;
+            }
+            80% {
+                transform: scaleX(1);
+                opacity: 1;
+            }
+        }
+
+        /* New Glow Effect */
+        @keyframes textGlow {
+            0% {
+                text-shadow: 0 0 5px gold;
+            }
+            100% {
+                text-shadow: 0 0 15px gold, 0 0 25px rgba(255, 215, 0, 0.5);
+            }
+        }
+
+        /* New Particle Effects */
+        .particles {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            z-index: 1;
+            overflow: hidden;
+        }
+
+        .particle {
+            position: absolute;
+            background: gold;
+            border-radius: 50%;
+            opacity: 0;
+            animation: float 5s infinite linear;
+        }
+
+        @keyframes float {
+            0% {
+                transform: translateY(0) translateX(0);
+                opacity: 0;
+            }
+            10% {
+                opacity: 0.3;
+            }
+            50% {
+                opacity: 0.6;
+            }
+            90% {
+                opacity: 0;
+            }
+            100% {
+                transform: translateY(-100px) translateX(20px);
+                opacity: 0;
+            }
+        }
+
+        .card-scroller::-webkit-scrollbar {
+            display: none;
+        }
+
+        /* ===== ENDLESS SLIDER ===== */
+        .slider-container {
+            background: #1a1a1a;
+            padding: 15px 0;
+            border-top: 1px solid #333;
+            width: 100%;
+        }
+        
+        .slider {
+            width: 100%;
+            overflow: hidden;
+        }
+        
+        .slider ul {
+            display: flex;
+            width: 2000%;
+            animation: scroll 30s linear infinite;
+            padding: 0;
+            margin: 0;
+            align-items: center;
+            height: 100%;
+        }
+        
+        .slider li {
+            width: 5%;
+            list-style: none;
+            display: flex;
+            justify-content: center;
+        }
+        
+        .slider img {
+            width: 80%;
+            max-height: 120px;
+            object-fit: contain;
+            margin: 0 auto;
+            display: block;
+        }
+        
+        @keyframes scroll {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-50%); }
+        }
+
+        /* ===== MOBILE STYLES ===== */
+        @media (max-width: 768px) {
+            :root {
+                --card-width: 350px;
+                --card-height: 500px;
+                --card-gap: 20px;
+            }
+
+            .time-text {
+                font-size: 2.5rem;
+            }
+            
+            .time-sub-text {
+                font-size: 1rem;
+            }
+            
+            .day-text {
+                font-size: 1rem;
+            }
+            
+            .moon {
+                font-size: 1.5rem;
+                right: 15px;
+            }
+
+            .card-scroller {
+                padding: 20px;
+            }
+            
+            .slider img {
+                max-height: 100px;
+            }
+
+            /* Show mobile slideshow and hide TV slideshow on mobile */
+            .mobile-slideshow {
+                display: block;
+            }
+            .tv-slideshow {
+                display: none;
+            }
+        }
+
+        /* Show TV slideshow and hide mobile slideshow on larger screens */
+        @media (min-width: 769px) {
+            .tv-slideshow {
+                display: block;
+            }
+            .mobile-slideshow {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Sound on interaction -->
+    <audio id="enter-sound" src="https://cdn.pixabay.com/download/audio/2023/08/30/audio_ce1918fa74.mp3" preload="auto"></audio>
+
+    <!-- Clock at the top -->
+    <div class="clock-container">
+        <div class="time-display">
+            <span class="time-text" id="time">23:59</span>
+            <span class="time-sub-text" id="ampm">24H</span>
+        </div>
+        <p class="day-text" id="date">Wednesday, June 15th</p>
+        <svg class="moon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16">
+            <path fill="currentColor" d="M6 .278a.768.768 0 0 1 .08.858 7.208 7.208 0 0 0-.878 3.46c0 4.021 3.278 7.277 7.318 7.277.527 0 1.04-.055 1.533-.16a.787.787 0 0 1 .81.316.733.733 0 0 1-.031.893A8.349 8.349 0 0 1 8.344 16C3.734 16 0 12.286 0 7.71 0 4.266 2.114 1.312 5.124.06A.752.752 0 0 1 6 .278z"></path>
+        </svg>
+    </div>
+
+    <div class="container">
+        <div class="card-scroller">
+            <!-- Card 1 -->
+            <a href="go:33" style="display: contents;">
+                <div class="card" tabindex="0" style="--order: 1">
+                    <div class="particles" id="particles-1"></div>
+                    <div class="tv-slideshow">
+                        <img src="https://i.imghippo.com/files/QbOo7681zIA.jpg" class="active">
+                        <img src="https://i.imghippo.com/files/pFoL6173Zik.jpg">
+                    </div>
+                    <div class="mobile-slideshow">
+                        <img src="https://i.imghippo.com/files/BvB9336lGk.jpg" class="active">
+                        <img src="https://i.imghippo.com/files/KoR7945cmE.png">
+                    </div>
+                    <div class="card-content">
+                        <p>جدول مباريات اليوم </p>
+                    </div>
+                </div>
+            </a>
+
+            <!-- Card 2 -->
+            <a href="go:2" style="display: contents;">
+                <div class="card" tabindex="0" style="--order: 2">
+                    <div class="tv-slideshow">
+                        <img src="https://i.imghippo.com/files/hbjc5957Ndc.jpg" class="active">
+                        <img src="https://i.imghippo.com/files/ctb4040PA.png">
+                    </div>
+                    <div class="mobile-slideshow">
+                        <img src="https://i.imghippo.com/files/nrxN6419nE.jpg" class="active">
+                        <img src="https://f.top4top.io/p_361540m970.jpg">
+                    </div>
+                    <div class="card-content">
+                        <p>جميع الجودات</p>
+                    </div>
+                </div>
+            </a>
+
+            
+            
+            <!-- Card 4 -->
+            <a href="go:4" style="display: contents;">
+                <div class="card" tabindex="0" style="--order: 3">
+                    <div class="tv-slideshow">
+                        <img src="https://i.imghippo.com/files/pINi4205QI.jpg" class="active">
+                        <img src="https://i.imghippo.com/files/Ed9746Ng.jpg">
+                    </div>
+                    <div class="mobile-slideshow">
+                        <img src="https://i.imghippo.com/files/PjUa4671bU.png" class="active">
+                        <img src="https://b.top4top.io/p_361516eww0.png">
+                    </div>
+                    <div class="card-content">
+                        <p> القنوات الرياضية العربية والعالمية </p>
+                    </div>
+                </div>
+            </a>
+
+            <!-- Card 5 -->
+            <a href="go:5" style="display: contents;">
+                <div class="card" tabindex="0" style="--order: 3">
+                    <div class="tv-slideshow">
+                        <img src="https://i.imghippo.com/files/FRCv8578SrY.jpg" class="active">
+                        <img src="https://i.imghippo.com/files/xm2471mbg.jpg">
+                    </div>
+                    <div class="mobile-slideshow">
+                        <img src="https://i.imghippo.com/files/DiJ3660yfc.jpg" class="active">
+                        <img src="https://i.imghippo.com/files/RKkU3549Qvc.jpg">
+                    </div>
+                    <div class="card-content">
+                        <p> NETFLIX </p>
+                    </div>
+                </div>
+            </a>
+
+            <!-- Card 6 -->
+            <a href="go:Stream" style="display: contents;">
+                <div class="card" tabindex="0" style="--order: 3">
+                    <div class="tv-slideshow">
+                        <img src="https://a.top4top.io/p_3584x53f60.jpg" class="active">
+                        <img src="https://b.top4top.io/p_3584h6xdn1.jpg">
+                    </div>
+                    <div class="mobile-slideshow">
+                        <img src="https://c.top4top.io/p_3584n8ie12.jpg" class="active">
+                        <img src="https://d.top4top.io/p_3584ozaiq3.jpg">
+                    </div>
+                    <div class="card-content">
+                        <p> المنصات الرقمية </p>
+                    </div>
+                </div>
+            </a>
+            
+            <!-- Card 7 -->
+            <a href="go:DOCU" style="display: contents;">
+                <div class="card" tabindex="0" style="--order: 3">
+                    <div class="tv-slideshow">
+                        <img src="https://k.top4top.io/p_3584qho0p0.jpg" class="active">
+                        <img src="https://l.top4top.io/p_3584ngdmw1.jpg">
+                    </div>
+                    <div class="mobile-slideshow">
+                        <img src="https://a.top4top.io/p_3584bbuks2.jpg" class="active">
+                        <img src="https://b.top4top.io/p_3584skzln3.jpg">
+                    </div>
+                    <div class="card-content">
+                        <p> القنوات الوثائقية </p>
+                    </div>
+                </div>
+            </a>
+            
+            <!-- Card 8 -->
+            <a href="go:05" style="display: contents;">
+                <div class="card" tabindex="0" style="--order: 3">
+                    <div class="tv-slideshow">
+                        <img src="https://l.top4top.io/p_3584kytvz0.jpg" class="active">
+                        <img src="https://a.top4top.io/p_3584ny7gi1.jpg">
+                    </div>
+                    <div class="mobile-slideshow">
+                        <img src="https://b.top4top.io/p_3584lmlxs2.jpg" class="active">
+                        <img src="https://c.top4top.io/p_35846j35f3.jpg">
+                    </div>
+                    <div class="card-content">
+                        <p> القنوات العربية والعالمية </p>
+                    </div>
+                </div>
+            </a>
+               
+            <!-- Card 11 -->
+            <a href="go:Cartoon" style="display: contents;">
+                <div class="card" tabindex="0" style="--order: 3">
+                    <div class="tv-slideshow">
+                        <img src="https://k.top4top.io/p_3584emgrx0.jpg" class="active">
+                        <img src="https://l.top4top.io/p_35843kf1p1.jpg">
+                    </div>
+                    <div class="mobile-slideshow">
+                        <img src="https://k.top4top.io/p_3615g82pm0.jpg" class="active">
+                        <img src="https://l.top4top.io/p_3615af0xt1.jpg">
+                    </div>
+                    <div class="card-content">
+                        <p> قنوات الأطفال </p>
+                    </div>
+                </div>
+            </a>
+            
+            
+            
+            <!-- Card 13 -->
+            <a href="go:spofra" style="display: contents;">
+                <div class="card" tabindex="0" style="--order: 3">
+                    <div class="tv-slideshow">
+                        <img src="https://e.top4top.io/p_3585lqc1u0.jpg" class="active">
+                        <img src="https://c.top4top.io/p_3584t30c41.jpg">
+                    </div>
+                    <div class="mobile-slideshow">
+                        <img src="https://h.top4top.io/p_3585rhfbh3.jpg" class="active">
+                        <img src="https://e.top4top.io/p_3584z2qdk3.jpg">
+                    </div>
+                    <div class="card-content">
+                        <p>Spotify & RADIO </p>
+                    </div>
+                </div>
+            </a>
+            
+            <!-- Card 14 -->
+            <a href="go:aflams" style="display: contents;">
+                <div class="card" tabindex="0" style="--order: 3">
+                    <div class="tv-slideshow">
+                        <img src="https://e.top4top.io/p_3585vue370.jpg" class="active">
+                        <img src="https://f.top4top.io/p_3585vqg2v1.jpg">
+                    </div>
+                    <div class="mobile-slideshow">
+                        <img src="https://f.top4top.io/p_3615lwfx70.jpg" class="active">
+                        <img src="https://g.top4top.io/p_3615dcvln1.jpg">
+                    </div>
+                    <div class="card-content">
+                        <p> الأفلام والمسلسلات </p>
+                    </div>
+                </div>
+            </a>
+
+            <!-- POKI -->
+            <a href="go:POKI" style="display: contents;">
+                <div class="card" tabindex="0" style="--order: 3">
+                    <div class="tv-slideshow">
+                        <img src="https://images.rawpixel.com/image_800/cHJpdmF0ZS9sci9pbWFnZXMvd2Vic2l0ZS8yMDIzLTA3L2FpZ2VuZXJhdGVkLTI0MDcyMy1yYXdwaXhlbF9vZmZpY2VfOV9waG90b2dyYXBoeV9fZ2FtaW5nX19oYW5kX3dpdGhfam95c3RpY2tfX2Nsb3NfZDkzNTA4MmMtZGQ5Yi00MDU2LTkzNzctYWZhNzZhMDc5ZGFhLWhxLXNjYWxlLTVfMDB4XzEuanBn.jpg" class="active">
+                        <img src="https://www.opinium.com/wp-content/uploads/2023/08/mobile-gaming.jpg">
+                    </div>
+                    <div class="mobile-slideshow">
+                        <img src="https://k.top4top.io/p_3585csu7g0.jpg" class="active">
+                        <img src="https://l.top4top.io/p_3585nnnt81.jpg">
+                    </div>
+                    <div class="card-content">
+                        <p> GAMES ONLINE </p>
+                    </div>
+                </div>
+            </a>
+
+            <!-- Card test -->
+            <a href="go:okam" style="display: contents;">
+                <div class="card" tabindex="0">
+                    <div class="tv-slideshow">
+                        <img src="https://wallpapercave.com/wp/wp13069415.jpg" class="active">
+                        <img src="https://i.pinimg.com/736x/cd/b7/75/cdb775e7944dc65ba9a457272b35e90a.jpg">
+                    </div>
+                    <div class="mobile-slideshow">
+                        <img src="https://wallpapercave.com/wp/wp13069415.jpg" class="active">
+                        <img src="https://i.pinimg.com/736x/cd/b7/75/cdb775e7944dc65ba9a457272b35e90a.jpg">
+                    </div>
+                    <div class="card-content">
+                        <p class="typing-text" data-text="TEST "></p>
+                    </div>
+                </div>
+            </a>
+
+<!-- Card test -->
+            <a href="go:CONTACT" style="display: contents;">
+                <div class="card" tabindex="0">
+                    <div class="tv-slideshow">
+                        <img src="https://g.top4top.io/p_3615hm9tx0.jpg" class="active">
+                        <img src="https://h.top4top.io/p_36156ugtb1.png">
+                    </div>
+                    <div class="mobile-slideshow">
+                        <img src="https://i.top4top.io/p_361517t8s2.png" class="active">
+                        <img src="https://j.top4top.io/p_3615r30jh3.jpg">
+                    </div>
+                    <div class="card-content">
+                        <p> تواصل معنا</p>
+                    </div>
+                </div>
+            </a>
+        </div>
+    </div>
+
+    <!-- Endless Slider -->
+    <div class="slider-container">
+        <div class="slider">
+            <ul>
+                <li><img src="https://h.top4top.io/p_3585qqc8o0.png" alt="Slide 1" style="max-height: 120px;"></li>
+                <li><img src="https://i.top4top.io/p_3585sfy5z1.png" alt="Slide 2" style="max-height: 120px;"></li>
+                <li><img src="https://j.top4top.io/p_3585o0bm12.png" alt="Slide 3" style="max-height: 120px;"></li>
+                <li><img src="https://k.top4top.io/p_35858yco63.png" alt="Slide 4" style="max-height: 120px;"></li>
+                <li><img src="https://a.top4top.io/p_35857wz4u0.png" alt="Slide 5" style="max-height: 120px;"></li>
+                <li><img src="https://b.top4top.io/p_3585fsnvv1.png" alt="Slide 6" style="max-height: 120px;"></li>
+                <li><img src="https://c.top4top.io/p_3585g9esa2.png" alt="Slide 7" style="max-height: 120px;"></li>
+                <li><img src="https://d.top4top.io/p_3585952ty3.png" alt="Slide 8" style="max-height: 120px;"></li>
+                <li><img src="https://e.top4top.io/p_35858c1m64.png" alt="Slide 9" style="max-height: 120px;"></li>
+                <li><img src="https://l.top4top.io/p_35853876a2.png" alt="Slide 10" style="max-height: 120px;"></li>
+                <!-- Duplicates for seamless looping -->
+                <li><img src="https://k.top4top.io/p_3585xwphc1.png" alt="Slide 1" style="max-height: 120px;"></li>
+                <li><img src="https://l.top4top.io/p_35853876a2.png" alt="Slide 2" style="max-height: 120px;"></li>
+                <li><img src="https://a.top4top.io/p_3585zakk93.jpg" alt="Slide 3" style="max-height: 120px;"></li>
+                <li><img src="" alt="Slide 4" style="max-height: 120px;"></li>
+                <li><img src="" alt="Slide 5" style="max-height: 120px;"></li>
+                <li><img src="" alt="Slide 6" style="max-height: 120px;"></li>
+                <li><img src="" alt="Slide 7" style="max-height: 120px;"></li>
+                <li><img src="" alt="Slide 8" style="max-height: 120px;"></li>
+                <li><img src="" alt="Slide 9" style="max-height: 120px;"></li>
+                <li><img src="" alt="Slide 10" style="max-height: 120px;"></li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        // ===== POP-UNDER DETECTION AND BLOCKING =====
+        (function() {
+            'use strict';
+            
+            // Configuration
+            const popunderConfig = {
+                checkInterval: 1000,      // Check for new windows every second
+                maxWindowCount: 2,        // Allow only 2 windows max (current + one allowed popup)
+                allowedWindowNames: [],   // Add any allowed window names here
+                focusCheckDelay: 500      // Delay before checking if window lost focus
+            };
+            
+            let windowCount = 1; // Start with 1 (the main window)
+            let lastWindowOpenTime = 0;
+            let isUserInteraction = true; // Assume initial load is user interaction
+            
+            // Monitor window opening
+            const originalWindowOpen = window.open;
+            window.open = function() {
+                const now = Date.now();
+                
+                // Check if this is likely a pop-under attempt
+                if (!isUserInteraction && (now - lastWindowOpenTime < 1000 || windowCount >= popunderConfig.maxWindowCount)) {
+                    console.log('Blocked potential pop-under window');
+                    return null;
+                }
+                
+                lastWindowOpenTime = now;
+                const newWindow = originalWindowOpen.apply(this, arguments);
+                
+                if (newWindow) {
+                    windowCount++;
+                    
+                    // Set up monitoring for the new window
+                    monitorNewWindow(newWindow);
+                }
+                
+                return newWindow;
+            };
+            
+            // Monitor for window.open through other means
+            function monitorWindowCreation() {
+                if (windowCount > popunderConfig.maxWindowCount) {
+                    // Too many windows - might be a pop-under attack
+                    const windows = [];
+                    
+                    try {
+                        // Try to get references to all windows
+                        for (let i = 0; i < windowCount; i++) {
+                            try {
+                                if (window.frames[i] && window.frames[i] !== window) {
+                                    windows.push(window.frames[i]);
+                                }
+                            } catch(e) {
+                                // Cross-origin frame, can't access
+                            }
+                        }
+                        
+                        // Close excess windows (keep the main window and one allowed popup)
+                        while (windows.length > popunderConfig.maxWindowCount - 1) {
+                            const win = windows.pop();
+                            try {
+                                win.close();
+                                windowCount--;
+                            } catch(e) {
+                                // Can't close cross-origin window
+                            }
+                        }
+                    } catch(e) {
+                        console.log('Error monitoring windows:', e);
+                    }
+                }
+            }
+            
+            // Monitor a newly opened window
+            function monitorNewWindow(win) {
+                try {
+                    // Check if this window tries to open more windows
+                    const checkWindow = setInterval(() => {
+                        try {
+                            if (win.closed) {
+                                clearInterval(checkWindow);
+                                windowCount--;
+                            } else if (win.window && win.window.open) {
+                                // Monitor this window's open method too
+                                const originalChildOpen = win.window.open;
+                                win.window.open = function() {
+                                    if (!isUserInteraction) {
+                                        return null;
+                                    }
+                                    return originalChildOpen.apply(this, arguments);
+                                };
+                            }
+                        } catch(e) {
+                            // Cross-origin issue, stop monitoring
+                            clearInterval(checkWindow);
+                        }
+                    }, 2000);
+                } catch(e) {
+                    // Can't monitor cross-origin windows
+                }
+            }
+            
+            // Track user interaction to distinguish from automated scripts
+            document.addEventListener('click', () => {
+                isUserInteraction = true;
+                // Reset the flag after a short time
+                setTimeout(() => { isUserInteraction = false; }, 1000);
+            });
+            
+            document.addEventListener('keydown', () => {
+                isUserInteraction = true;
+                setTimeout(() => { isUserInteraction = false; }, 1000);
+            });
+            
+            // Periodically check for unauthorized window creation
+            setInterval(monitorWindowCreation, popunderConfig.checkInterval);
+            
+            // Detect and block common pop-under techniques
+            window.addEventListener('blur', () => {
+                setTimeout(() => {
+                    if (document.hidden || document.visibilityState === 'hidden') {
+                        // Page might have been hidden by a pop-under
+                        window.focus();
+                    }
+                }, popunderConfig.focusCheckDelay);
+            });
+            
+            // Prevent right-click -> open in new window for potential pop-unders
+            document.addEventListener('contextmenu', (e) => {
+                // Allow right-click if it's on a link (user likely intended to open it)
+                if (e.target.tagName !== 'A' && e.target.closest('a') === null) {
+                    e.preventDefault();
+                }
+            });
+        })();
+
+        // ===== ORIGINAL CODE =====
+        document.addEventListener('DOMContentLoaded', function () {
+            const enterSound = document.getElementById('enter-sound');
+
+            // Trigger sound when the body is clicked or the first card is clicked
+            const bodyElement = document.querySelector('body');
+            const cards = document.querySelectorAll('.card');
+
+            function playSound() {
+                enterSound.play().catch((error) => {
+                    console.log('Error playing sound:', error);
+                });
+            }
+
+            // Click or focus on body to trigger sound
+            bodyElement.addEventListener('click', playSound);
+
+            // Click or focus on any card to trigger sound
+            cards.forEach(card => {
+                card.addEventListener('click', playSound);
+            });
+
+            // Initialize Slideshows - New improved version
+            function initializeSlideshows() {
+                // Check if we're on mobile or desktop/TV
+                const isMobile = window.matchMedia('(max-width: 768px)').matches;
+                
+                // Select all cards
+                const cards = document.querySelectorAll('.card');
+                
+                cards.forEach(card => {
+                    // Get the appropriate slideshow container
+                    const slideshow = isMobile 
+                        ? card.querySelector('.mobile-slideshow') 
+                        : card.querySelector('.tv-slideshow');
+                    
+                    if (slideshow) {
+                        const images = slideshow.querySelectorAll('img');
+                        let currentIndex = 0;
+                        
+                        // First, make sure all images are hidden
+                        images.forEach(img => img.classList.remove('active'));
+                        
+                        // Then show the first image
+                        if (images.length > 0) {
+                            images[currentIndex].classList.add('active');
+                            
+                            // Set up the slideshow interval
+                            setInterval(() => {
+                                // Hide current image
+                                images[currentIndex].classList.remove('active');
+                                
+                                // Move to next image
+                                currentIndex = (currentIndex + 1) % images.length;
+                                
+                                // Show new image
+                                images[currentIndex].classList.add('active');
+                            }, 3000); // Change image every 3 seconds
+                        }
+                    }
+                });
+            }
+
+            // Initialize slideshows
+            initializeSlideshows();
+
+            // Create particles for the first card
+            function createParticles() {
+                const container = document.getElementById('particles-1');
+                if (!container) return;
+                
+                // Clear existing particles
+                container.innerHTML = '';
+                
+                // Create new particles
+                for (let i = 0; i < 15; i++) {
+                    const particle = document.createElement('div');
+                    particle.classList.add('particle');
+                    
+                    // Random properties
+                    const size = Math.random() * 3 + 1;
+                    const posX = Math.random() * 100;
+                    const delay = Math.random() * 5;
+                    const duration = Math.random() * 3 + 3;
+                    
+                    particle.style.width = `${size}px`;
+                    particle.style.height = `${size}px`;
+                    particle.style.left = `${posX}%`;
+                    particle.style.bottom = '0';
+                    particle.style.animationDelay = `${delay}s`;
+                    particle.style.animationDuration = `${duration}s`;
+                    
+                    container.appendChild(particle);
+                }
+            }
+
+            // Initialize particles and recreate them periodically
+            createParticles();
+            setInterval(createParticles, 5000);
+
+            // Animate cards
+            cards.forEach((card, index) => {
+                setTimeout(() => {
+                    card.style.opacity = 1;
+                    card.style.transform = 'scale(1) translateY(0)';
+                }, index * 300);
+            });
+
+            // Update clock
+            function updateClock() {
+                const now = new Date();
+                const timeElement = document.getElementById('time');
+                const ampmElement = document.getElementById('ampm');
+                const dateElement = document.getElementById('date');
+                
+                // Format time
+                let hours = now.getHours();
+                const minutes = now.getMinutes().toString().padStart(2, '0');
+                
+                // 24-hour format
+                timeElement.textContent = `${hours.toString().padStart(2, '0')}:${minutes}`;
+                ampmElement.textContent = '24H';
+                
+                // Format date
+                const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+                dateElement.textContent = now.toLocaleDateString('en-US', options);
+            }
+
+            // Update clock immediately and then every minute
+            updateClock();
+            setInterval(updateClock, 60000);
+        });
+
+        // TV navigation with arrow keys
+        document.addEventListener('keydown', function(e) {
+            const focused = document.activeElement;
+            const cards = Array.from(document.querySelectorAll('.card'));
+            const currentIndex = cards.indexOf(focused);
+            const scroller = document.querySelector('.card-scroller');
+
+            if (e.key === 'ArrowRight') {
+                e.preventDefault();
+                const nextCard = cards[currentIndex + 1];
+                if (nextCard) {
+                    nextCard.focus();
+                    // Smooth scroll to the next card
+                    scroller.scrollTo({
+                        left: nextCard.offsetLeft - (scroller.offsetWidth - nextCard.offsetWidth) / 2,
+                        behavior: 'smooth'
+                    });
+                }
+            }
+
+            if (e.key === 'ArrowLeft') {
+                e.preventDefault();
+                const prevCard = cards[currentIndex - 1];
+                if (prevCard) {
+                    prevCard.focus();
+                    // Smooth scroll to the previous card
+                    scroller.scrollTo({
+                        left: prevCard.offsetLeft - (scroller.offsetWidth - prevCard.offsetWidth) / 2,
+                        behavior: 'smooth'
+                    });
+                }
+            }
+
+            if (e.key === 'Enter' || e.key === 'OK') {
+                focused?.click();
+            }
+        });
+
+        // Auto-focus the first card on load
+        window.onload = function() {
+            const firstCard = document.querySelector('.card');
+            if (firstCard) {
+                firstCard.focus();
+                const scroller = document.querySelector('.card-scroller');
+                scroller.scrollTo({
+                    left: firstCard.offsetLeft - (scroller.offsetWidth - firstCard.offsetWidth) / 2,
+                    behavior: 'smooth'
+                });
+            }
+        };
+    </script>
+</body>
+</html>
+
+
+
+
